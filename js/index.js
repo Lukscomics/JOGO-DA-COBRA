@@ -6,6 +6,11 @@
     const SNAKE_BORDER_COLOUR = 'darkgreen';
     const FOOD_COLOUR = 'red';
     const FOOD_BORDER_COLOUR = 'darkred';
+	var actualPlayer;
+	var ranking;
+	var actualScore = 0;
+	var playerScore = {name : "", score : 0};
+
 	//Relogio
 	var fontType = "stab"
 	var fontSize = 20;
@@ -31,13 +36,13 @@
     let dx = 10;
     // Velocidade para Vertical Y
     let dy = 0;
-    
+
 	let up = new Audio();
 	let right = new Audio();
 	let left = new Audio();
 	let down = new Audio();
 	let morreu = new Audio();
-	
+
 	up.src = "audio/up.mp3";
 	right.src = "audio/right.mp3";
 	left.src = "audio/left.mp3";
@@ -46,7 +51,8 @@
     const gameCanvas = document.getElementById("gameCanvas");
     const ctx = gameCanvas.getContext("2d");
     // Start
-    main();
+
+
     // Criar a primeira Comida no jogo.
     createFood();
     // Chama a função "changeDirection" toda vez que uma tecla é pressionada.
@@ -54,15 +60,27 @@
     /**
     Função Principal, chamada varias vezes.
      */
-    function main() {
-     
+
+ function init() {
+    actualPlayer = document.getElementById("player").value;
+    document.getElementById("player").value = "";
+    document.getElementById("iniciar").disabled = true;
+    main();
+ }
+
+   function main(){
+
 	  // Se o jogo terminar tera retorno para parar o jogo
       if (didGameEnd()){
-		 morreu.play(); 
-	     morreu.stop();
+        saveScore();
+        showRanking();
+     morreu.play();
+
 	  return;
 	  }
-      
+
+
+
 	  setTimeout(function onTick() {
         changingDirection = false;
         clearCanvas();
@@ -72,9 +90,42 @@
         // Call game again
         main();
       }, GAME_SPEED)
-	  
+}
+
+
+	function saveScore() {
+
+    // Retrieving data:
+    var jsonFile = localStorage.getItem("rankingJSON");
+    playerScore.name = actualPlayer
+    playerScore.score = score;
+
+    if (jsonFile != null) {
+        ranking = JSON.parse(jsonFile);
+    } else { //Qdo ainda não existe ranking
+        ranking = {players:[]};
     }
-    /**
+    var pontuacoes = ranking.players;
+    pontuacoes.push(playerScore);
+    ranking.players = pontuacoes;
+
+    var objJSON = JSON.stringify(ranking);
+    localStorage.setItem("rankingJSON", objJSON);
+
+}
+
+function showRanking() {
+  var text = "<h2> Ranking: </h2>";
+  var pontuacoes = ranking.players;
+
+  for (i in pontuacoes) {
+      text = text + "Nome: " + pontuacoes[i].name + " - Pontos: " + pontuacoes[i].score + "<br>";
+
+    }
+
+      document.getElementById("ranking").innerHTML = text;
+}
+	/**
      * Change the background colour of the canvas to CANVAS_BACKGROUND_COLOUR and
      * draw a border around it
      */
@@ -120,7 +171,7 @@
         snake.pop();
       }
     }
-	
+
 //-------------------------------------------------------
 ///Formata o tempo
 function formatTime (time) {
@@ -132,16 +183,16 @@ function formatTime (time) {
   if (minute < 10) {minute = '0' + minute};
   tmp = Math.floor(tmp / 60);
   var hour = tmp;
-  if (hour < 10) {hour = '0' + hour}; 
+  if (hour < 10) {hour = '0' + hour};
   return hour + ':' + minute + ':' + second;
 }
  //Animação
 function animate() {
   var startTime = +new Date();
   var step = function () {
-      time = +new Date() - startTime + dTime; 
-	  
-	  // Desenhando Tempo 
+      time = +new Date() - startTime + dTime;
+
+	  // Desenhando Tempo
 	   document.getElementById('time').innerHTML = formatTime(time);
       requestAnimationFrame(step)
     }
@@ -154,16 +205,16 @@ function animate() {
      */
     function didGameEnd() {
       for (let i = 4; i < snake.length; i++) {
-        if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) 
+        if (snake[i].x === snake[0].x && snake[i].y === snake[0].y)
 			return true
-	  
+
 	  }
       const hitLeftWall = snake[0].x < 0;
       const hitRightWall = snake[0].x > gameCanvas.width - 10;
       const hitToptWall = snake[0].y < 0;
       const hitBottomWall = snake[0].y > gameCanvas.height - 10;
       return hitLeftWall || hitRightWall || hitToptWall || hitBottomWall
-   
+
 	}
     /**
      * Generates a random number that is a multiple of 10 given a minumum
@@ -231,7 +282,7 @@ function animate() {
        */
       if (changingDirection) return;
       changingDirection = true;
-      
+
       const keyPressed = event.keyCode;
       const goingUp = dy === -10;
       const goingDown = dy === 10;
@@ -242,24 +293,23 @@ function animate() {
         dy = 0;
         left.play();
 }
-      
+
       if (keyPressed === UP_KEY && !goingDown) {
         dx = 0;
         dy = -10;
         down.play();
 }
-      
+
       if (keyPressed === RIGHT_KEY && !goingLeft) {
         dx = 10;
         dy = 0;
        right.play();
 }
-      
+
       if (keyPressed === DOWN_KEY && !goingUp) {
         dx = 0;
         dy = 10;
         up.play();
 }
-    } animate();
-	
-	
+    }
+    animate();
